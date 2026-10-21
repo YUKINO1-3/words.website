@@ -243,6 +243,7 @@ function App() {
       word: word.word,
       fields: result.fields,
       cached: result.cached,
+      elapsedMs: result.elapsedMs,
     });
   }
   async function saveGeneratedFields() {
@@ -1626,7 +1627,12 @@ function App() {
           <Dialog.Content className="modal">
             <Dialog.Title>AI 补全：{aiDraft?.word}</Dialog.Title>
             <Dialog.Description>
-              以下资料由 AI 生成{aiDraft?.cached ? "（已缓存）" : ""}
+              以下资料由 AI 生成
+              {aiDraft?.cached
+                ? "（本地缓存）"
+                : aiDraft?.elapsedMs
+                  ? `（生成耗时 ${(aiDraft.elapsedMs / 1000).toFixed(1)} 秒）`
+                  : ""}
               ，可以修改后保存。仅填补空白内容，保留已有释义与笔记。
             </Dialog.Description>
             {error && (

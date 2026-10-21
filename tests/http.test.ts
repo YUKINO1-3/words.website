@@ -27,10 +27,14 @@ test("AI structured fields can be previewed, saved, edited and restored from an 
     phonetic: "",
   };
   const { createServer } = await import("node:http");
+  let completionRequest: any;
+  let completionCalls = 0;
   const upstream = createServer(async (req, res) => {
+    completionCalls++;
     let body = "";
     for await (const chunk of req) body += chunk;
-    assert.match(JSON.parse(body).messages[1].content, /JSON/);
+    completionRequest = JSON.parse(body);
+    assert.match(completionRequest.messages[1].content, /JSON/);
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
@@ -56,6 +60,8 @@ test("AI structured fields can be previewed, saved, edited and restored from an 
       kind: "word-fields",
     });
     assert.equal(draft.status, 200);
+    assert.deepEqual(completionRequest.thinking, { type: "disabled" });
+    assert.equal(completionRequest.max_completion_tokens, 1024);
     assert.deepEqual(draft.data.fields, generated);
     assert.equal((await request(server.url, "/api/next")).data.zh, "");
     assert.equal(
@@ -71,6 +77,12 @@ test("AI structured fields can be previewed, saved, edited and restored from an 
     assert.equal(saved.zh, generated.zh);
     assert.equal(saved.usage, generated.usage);
     assert.equal(saved.reps, 0);
+    const cached = await request(server.url, "/api/ai", {
+      wordId: 1,
+      kind: "word-fields",
+    });
+    assert.equal(cached.data.cached, true);
+    assert.equal(completionCalls, 1);
     await request(
       server.url,
       "/api/words/1",
