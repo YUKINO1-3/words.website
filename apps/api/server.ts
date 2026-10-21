@@ -139,7 +139,7 @@ app.post("/api/words/:id/ai-content", (req, res) => {
       id(req.params.id),
       body.word,
       body.fields,
-      process.env.AI_MODEL || "mimo-v2.6-pro",
+      process.env.AI_MODEL || "mimo-v2.6-flash",
     ),
   );
 });
@@ -408,7 +408,7 @@ app.post("/api/ai", async (req, res) => {
             .map((x) => x.word),
         )}`;
   const key = createHash("sha256")
-    .update((process.env.AI_MODEL || "mimo-v2.6-pro") + prompt)
+    .update((process.env.AI_MODEL || "mimo-v2.6-flash") + prompt)
     .digest("hex");
   const cached = store.one(
     "SELECT content FROM ai_generation_cache WHERE key=?",
@@ -444,7 +444,7 @@ app.post("/api/ai", async (req, res) => {
           Authorization: `Bearer ${process.env.AI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: process.env.AI_MODEL || "mimo-v2.6-pro",
+          model: process.env.AI_MODEL || "mimo-v2.6-flash",
           messages: [
             {
               role: "system",

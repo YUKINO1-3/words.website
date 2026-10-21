@@ -108,7 +108,7 @@ SQL 迁移在 `database/migrations`，按文件名逐个事务执行，记录在
 ```dotenv
 AI_API_KEY=你的服务端密钥
 AI_BASE_URL=https://api.xiaomimimo.com/v1
-AI_MODEL=mimo-v2.6-pro
+AI_MODEL=mimo-v2.6-flash
 ```
 
 重启服务，在网站设置开启 AI，再主动点击卡片“AI 深度解释”或“生成今日学习建议”。服务端按 [MiMo 官方 OpenAI 兼容接口](https://mimo.mi.com/docs/en-US/quick-start/summary/first-api-call) 调用。Key 不返回浏览器、不使用 `VITE_` 环境变量、不写入日志或 Git。

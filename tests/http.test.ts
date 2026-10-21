@@ -184,7 +184,7 @@ test("AI: OpenAI-compatible local stub, explicit opt-in, cache, rate limit and p
   const env = {
     AI_API_KEY: "fixture-key",
     AI_BASE_URL: `http://127.0.0.1:${address.port}/v1`,
-    AI_MODEL: "mimo-v2.6-pro",
+    AI_MODEL: "mimo-v2.6-flash",
   };
   let server = await launch(dir, env);
   try {
@@ -194,7 +194,7 @@ test("AI: OpenAI-compatible local stub, explicit opt-in, cache, rate limit and p
     const a = await request(server.url, "/api/ai", {});
     assert.equal(a.status, 200);
     assert.equal(a.data.cached, false);
-    assert.equal(sent.model, "mimo-v2.6-pro");
+    assert.equal(sent.model, "mimo-v2.6-flash");
     assert.ok(sent.messages[1].content.includes("真实统计"));
     assert.equal((await request(server.url, "/api/ai", {})).data.cached, true);
     assert.equal(calls, 1);
