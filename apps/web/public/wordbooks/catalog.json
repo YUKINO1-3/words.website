@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ielts-ecdict",
+    "title": "雅思常用词",
+    "description": "按 ECDICT 的 IELTS 标签整理，按词频优先排列，适合雅思词汇积累与查漏补缺。",
+    "version": "ECDICT-bc015ed2",
+    "sourceName": "ECDICT · IELTS 标签",
+    "sourceUrl": "https://github.com/skywind3000/ECDICT/tree/bc015ed2e24a7abef49fc6dbbb7fe32c1dadaf8b",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/skywind3000/ECDICT/blob/bc015ed2e24a7abef49fc6dbbb7fe32c1dadaf8b/LICENSE",
+    "count": 5040,
+    "sha256": "b405a4c01c5e1f037e2c34bf9f69208c9070fb9b235a42ab7eede875be108cfb",
+    "file": "/wordbooks/ielts-ecdict.b405a4c01c5e.json",
+    "sample": [
+      "acquire",
+      "assess",
+      "evidence",
+      "strategy",
+      "in"
+    ]
+  },
+  {
+    "id": "nawl-12",
+    "title": "NAWL 学术核心词",
+    "description": "NGSL Project 的 NAWL 1.2 学术词表，配中文释义，适合学术阅读与写作拓展。",
+    "version": "1.2-zh-1",
+    "sourceName": "NGSL Project · NAWL",
+    "sourceUrl": "https://www.newgeneralservicelist.com/new-academic-word-list",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "count": 957,
+    "sha256": "c4c8813a564403fc165354de1dd5f1c0d21e27e4da9ba68c15dd3bbf8af87053",
+    "file": "/wordbooks/nawl-12.c4c8813a5644.json",
+    "sample": [
+      "empirical",
+      "methodology",
+      "validity",
+      "abdominal",
+      "absorb"
+    ]
+  },
+  {
+    "id": "ngsl-12",
+    "title": "NGSL 基础高频词",
+    "description": "NGSL Project 的 NGSL 1.2 通用高频词表，配中文释义，为雅思与学术英语打好基础。",
+    "version": "1.2-zh-1",
+    "sourceName": "NGSL Project · NGSL",
+    "sourceUrl": "https://www.newgeneralservicelist.com/new-general-service-list",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "count": 2809,
+    "sha256": "10cf108b26d6667064cc394954770da7c080466bee065c9c40ac81b3e07cd316",
+    "file": "/wordbooks/ngsl-12.10cf108b26d6.json",
+    "sample": [
+      "ability",
+      "discuss",
+      "explain",
+      "improve",
+      "reason"
+    ]
+  }
+]

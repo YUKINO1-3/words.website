@@ -28,6 +28,7 @@ import {
 import * as Dialog from "@radix-ui/react-dialog";
 import "./style.css";
 import { api } from "./api.ts";
+import { OfficialWordbooks } from "./wordbooks/OfficialWordbooks.tsx";
 type Any = Record<string, any>;
 const modes = [
   ["card", "单词卡片"],
@@ -546,9 +547,15 @@ function App() {
                   </h2>
                   <p>把想学的词，慢慢变成会用的词。</p>
                 </div>
-                <button className="text-button" onClick={() => go("library")}>
-                  查看全部 <ArrowUpRight size={16} />
-                </button>
+                <div className="button-row">
+                  <button className="text-button" onClick={() => go("library")}>
+                    <BookOpen size={16} />
+                    选择内置词库
+                  </button>
+                  <button className="text-button" onClick={() => go("library")}>
+                    查看全部 <ArrowUpRight size={16} />
+                  </button>
+                </div>
               </div>
               <div className="vocab-grid">
                 {vocabs.slice(0, 3).map((v, i) => (
@@ -595,6 +602,18 @@ function App() {
                 title={page === "difficult" ? "把困难，变成进步" : "我的词库"}
                 sub="同一个单词跨词库共享学习进度，不重复统计。"
               />
+              {page === "library" && (
+                <OfficialWordbooks
+                  onAdded={async (id, message) => {
+                    await refresh();
+                    setVocab(id);
+                    setFilter("");
+                    setQuery("");
+                    setWords(await api(`/words?vocab=${id}&q=&filter=`));
+                    setNotice(message);
+                  }}
+                />
+              )}
               <div className="toolbar">
                 <select
                   value={vocab}
@@ -823,6 +842,13 @@ function App() {
                 title="为下一次进步，准备词汇"
                 sub="Excel、CSV 或 TXT · UTF-8 编码 · 单次最多 20,000 行 / 20 MB"
               />
+              <p className="info">
+                没有现成词表？
+                <button className="text-button" onClick={() => go("library")}>
+                  选择应用内置词库
+                </button>
+                ，也可以继续上传自己的文件。
+              </p>
               <section className="panel padding">
                 <div className="section-head">
                   <h3>01 / 选择文件</h3>
