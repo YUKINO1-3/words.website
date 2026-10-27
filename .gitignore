@@ -14,3 +14,6 @@ logs/
 test-results/
 .test-data/
 words/outputs/
+
+# Server-side account encryption key; never commit credentials.
+auth-encryption.key

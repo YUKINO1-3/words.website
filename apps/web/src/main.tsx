@@ -4,6 +4,7 @@ import {
   BookOpen,
   LayoutDashboard,
   Library,
+  LogOut,
   Upload,
   ChartNoAxesCombined,
   Settings,
@@ -28,6 +29,8 @@ import {
 import * as Dialog from "@radix-ui/react-dialog";
 import "./style.css";
 import { api } from "./api.ts";
+import { AuthGate } from "./Auth.tsx";
+import { createEventId } from "./event-id.ts";
 type Any = Record<string, any>;
 const modes = [
   ["card", "单词卡片"],
@@ -47,7 +50,15 @@ const fieldNames: Any = {
   tags: "标签",
   notes: "个人备注",
 };
-function App() {
+function App({
+  username,
+  onLogout,
+  onPasswordChanged,
+}: {
+  username: string;
+  onLogout: () => Promise<void>;
+  onPasswordChanged: (data: any) => void;
+}) {
   const [page, setPage] = useState("home"),
     [stats, setStats] = useState<Any>(),
     [settings, setSettings] = useState<Any>(),
@@ -75,23 +86,36 @@ function App() {
     [options, setOptions] = useState<string[]>([]),
     [ai, setAi] = useState(""),
     [aiDraft, setAiDraft] = useState<Any | null>(null),
-    [practice, setPractice] = useState(false);
+    [practice, setPractice] = useState(false),
+    [provider, setProvider] = useState<Any>({
+      baseUrl: "",
+      model: "",
+      configured: false,
+    }),
+    [providerKey, setProviderKey] = useState(""),
+    [passwordForm, setPasswordForm] = useState({
+      current: "",
+      next: "",
+      confirm: "",
+    });
   const started = useRef(Date.now()),
     active = useRef(0),
     lastTick = useRef(Date.now()),
-    eventId = useRef(crypto.randomUUID()),
+    eventId = useRef(createEventId()),
     pendingRating = useRef<number | null>(null);
   async function refresh() {
-    const [s, v, se, st] = await Promise.all([
+    const [s, v, se, st, aiConfig] = await Promise.all([
       api("/stats"),
       api("/vocabularies"),
       api("/settings"),
       api("/status"),
+      api("/account/ai"),
     ]);
     setStats(s);
     setVocabs(v);
     setSettings(se);
     setStatus(st);
+    setProvider(aiConfig);
     document.documentElement.dataset.theme = se.theme;
     return se;
   }
@@ -180,7 +204,7 @@ function App() {
     setCorrect(null);
     setAnswer("");
     setAi("");
-    eventId.current = crypto.randomUUID();
+    eventId.current = createEventId();
     pendingRating.current = null;
     active.current = 0;
     started.current = Date.now();
@@ -296,7 +320,7 @@ function App() {
             VocabFlow<span className="ai-badge">AI</span>
           </span>
         </a>
-        <div className="workspace">PERSONAL WORKSPACE</div>
+        <div className="workspace">{username} 的学习空间</div>
         <nav>
           {nav.map(([key, label, Icon]) => (
             <button
@@ -315,10 +339,20 @@ function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
+          <button
+            className="nav logout-button"
+            aria-label="退出登录"
+            title="退出登录"
+            disabled={busy}
+            onClick={() => action(onLogout)}
+          >
+            <LogOut size={19} />
+            退出登录
+          </button>
           <div className="local-note">
             <ShieldCheck size={18} />
             <div>
-              只属于你的学习空间<small>本地存储 · 无需登录</small>
+              只属于你的学习空间<small>账号隔离 · 私人空间</small>
             </div>
           </div>
           <button
@@ -326,7 +360,7 @@ function App() {
             onClick={() => go("settings")}
           >
             <Settings size={19} />
-            设置与备份
+            设置与导出
           </button>
           <div className="profile">
             <span>{settings.nickname?.slice(0, 1) || "V"}</span>
@@ -368,7 +402,7 @@ function App() {
               {page === "study"
                 ? "专注学习"
                 : page === "settings"
-                  ? "设置与备份"
+                  ? "设置与导出"
                   : nav.find((x) => x[0] === page)?.[1]}
             </b>
           </span>
@@ -1440,6 +1474,167 @@ function App() {
               />
               <form
                 className="panel padding settings-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  action(async () => {
+                    const saved = await api(
+                      "/account/ai",
+                      {
+                        baseUrl: provider.baseUrl,
+                        model: provider.model,
+                        ...(providerKey ? { apiKey: providerKey } : {}),
+                      },
+                      "PUT",
+                    );
+                    setProvider(saved);
+                    setProviderKey("");
+                    await refresh();
+                    setNotice("个人 AI 配置已保存");
+                  });
+                }}
+              >
+                <h2>个人 AI 服务</h2>
+                <p>
+                  填写你自己的 OpenAI
+                  兼容服务。密钥加密保存，不会显示已保存的密钥。
+                </p>
+                <Field label="Base URL">
+                  <input
+                    required
+                    type="url"
+                    placeholder="https://api.example.com/v1"
+                    value={provider.baseUrl}
+                    onChange={(e) =>
+                      setProvider({ ...provider, baseUrl: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="模型名称">
+                  <input
+                    required
+                    value={provider.model}
+                    onChange={(e) =>
+                      setProvider({ ...provider, model: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field
+                  label={
+                    provider.configured
+                      ? "新 API Key（留空保留现有密钥）"
+                      : "API Key"
+                  }
+                >
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    value={providerKey}
+                    onChange={(e) => setProviderKey(e.target.value)}
+                  />
+                </Field>
+                <p role="status">
+                  密钥：{provider.configured ? "已配置" : "未配置"}
+                  。保存配置后，还需在下方开启 AI 功能。
+                </p>
+                <div className="button-row">
+                  <button className="primary" disabled={busy}>
+                    保存 AI 配置
+                  </button>
+                  {provider.configured && (
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        if (confirm("清除这个账号保存的 AI 密钥？"))
+                          action(async () => {
+                            setProvider(
+                              await api(
+                                "/account/ai",
+                                {
+                                  baseUrl: provider.baseUrl,
+                                  model: provider.model,
+                                  clearKey: true,
+                                },
+                                "PUT",
+                              ),
+                            );
+                            setProviderKey("");
+                            await refresh();
+                          });
+                      }}
+                    >
+                      清除密钥
+                    </button>
+                  )}
+                </div>
+              </form>
+              <form
+                className="panel padding settings-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  action(async () => {
+                    if (passwordForm.next !== passwordForm.confirm)
+                      throw new Error("两次新密码不一致");
+                    const result = await api("/auth/password", {
+                      currentPassword: passwordForm.current,
+                      password: passwordForm.next,
+                    });
+                    onPasswordChanged(result);
+                    setPasswordForm({ current: "", next: "", confirm: "" });
+                    setNotice("密码已更新，其他设备已退出登录");
+                  });
+                }}
+              >
+                <h2>修改密码</h2>
+                <Field label="当前密码">
+                  <input
+                    required
+                    type="password"
+                    autoComplete="current-password"
+                    value={passwordForm.current}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        current: e.target.value,
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="新密码（至少 12 个字符）">
+                  <input
+                    required
+                    minLength={12}
+                    maxLength={128}
+                    type="password"
+                    autoComplete="new-password"
+                    value={passwordForm.next}
+                    onChange={(e) =>
+                      setPasswordForm({ ...passwordForm, next: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="确认新密码">
+                  <input
+                    required
+                    minLength={12}
+                    type="password"
+                    autoComplete="new-password"
+                    value={passwordForm.confirm}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        confirm: e.target.value,
+                      })
+                    }
+                  />
+                </Field>
+                <button className="primary" disabled={busy}>
+                  更新密码
+                </button>
+              </form>
+              <form
+                className="panel padding settings-form"
                 onSubmit={(e) => {
                   e.preventDefault();
                   action(async () => {
@@ -1553,56 +1748,47 @@ function App() {
                 </div>
                 <p className="info">
                   AI 开启后，仅在点击生成时向外部服务发送当前单词或学习摘要。API
-                  Key 仅在服务器 .env 配置；修改后重启服务。
+                  Key 在此账号的个人 AI 设置中配置；保存后立即生效。
                 </p>
                 <button className="primary" disabled={busy}>
                   保存设置
                 </button>
               </form>
               <section className="panel padding space-top">
-                <h3>数据与完整备份</h3>
+                <h3>单词与释义导出</h3>
                 <p>
-                  实际数据库位置：<code>{status.dataPath}</code>
-                </p>
-                <p>
-                  完整 SQLite 备份包含词库、设置、FSRS 卡片和复习日志；普通 CSV
-                  适合查看与交换单词，不能恢复完整学习状态。
+                  下载当前账号的全部单词和中文释义，CSV 文件仅包含 word、zh
+                  两列。
                 </p>
                 <div className="button-row">
-                  <a className="button primary" href="/api/backup">
+                  <button
+                    className="button primary"
+                    disabled={busy}
+                    onClick={() =>
+                      action(async () => {
+                        const blob = await api(
+                          "/export?type=vocabulary",
+                          undefined,
+                          "GET",
+                          60_000,
+                          true,
+                        );
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = "vocabflow-vocabulary.csv";
+                        link.click();
+                        setTimeout(() => URL.revokeObjectURL(url), 1000);
+                      })
+                    }
+                  >
                     <Download size={17} />
-                    下载完整备份
-                  </a>
-                  <label className="button secondary">
-                    恢复完整备份
-                    <input
-                      hidden
-                      type="file"
-                      accept=".sqlite,.db"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (
-                          file &&
-                          confirm(
-                            "用该完整备份替换当前学习空间？会先校验备份，并在 backups 中备份当前数据。请关闭其他学习标签页。",
-                          )
-                        )
-                          action(async () => {
-                            const form = new FormData();
-                            form.append("file", file);
-                            await api("/restore", form);
-                            await refresh();
-                            setCard(null);
-                            setNotice("完整备份恢复成功");
-                          });
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
+                    下载词汇 CSV
+                  </button>
                 </div>
                 <p className="muted">
-                  运行中通过 SQLite 在线备份生成一致快照。恢复前的自动备份在项目
-                  backups 目录。停止服务请在启动窗口按 Ctrl+C。
+                  可通过“导入词库”重新导入此 CSV。文件不包含账号信息、AI
+                  配置、学习记录或记忆进度。
                 </p>
               </section>
             </>
@@ -1868,4 +2054,6 @@ function VocabCard({
     </button>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <AuthGate>{(props) => <App {...props} />}</AuthGate>,
+);

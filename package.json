@@ -11,7 +11,8 @@
     "build": "tsc --noEmit && vite build",
     "start": "tsx apps/api/server.ts",
     "test": "tsx --test tests/*.test.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "account": "tsx scripts/account.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

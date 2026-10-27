@@ -30,7 +30,7 @@ if (command === "install") {
 } else if (command === "configure") {
   if (!existsSync(".env")) copyFileSync(".env.example", ".env");
   console.log(
-    "配置文件已准备好。API Key 仅保存在本机 .env，填写 AI_API_KEY 后重启。",
+    "配置文件已准备好。本地 HTTP 测试请设置 AUTH_COOKIE_SECURE=false；个人 AI 密钥在登录后的网页设置中填写。",
   );
   if (process.platform === "win32")
     spawn("notepad.exe", [path.join(root, ".env")], { stdio: "ignore" });
@@ -70,7 +70,7 @@ if (command === "install") {
   for (let i = 0; i < 50; i++) {
     await new Promise((r) => setTimeout(r, 250));
     try {
-      const response = await fetch(url + "/api/status");
+      const response = await fetch(url + "/api/auth/session");
       if (response.ok) {
         if (process.platform === "win32")
           spawn("cmd.exe", ["/c", "start", "", url], {

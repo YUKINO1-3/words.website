@@ -14,6 +14,17 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import ExcelJS from "exceljs";
 import { root, Store } from "../apps/api/store.ts";
+import { Accounts } from "../apps/api/auth.ts";
+const sessions = new Map<string, { cookie: string; csrf: string }>();
+async function authedFetch(url: string, init: RequestInit = {}) {
+  const session = sessions.get(new URL(url).origin);
+  const headers = new Headers(init.headers);
+  if (session) {
+    headers.set("Cookie", session.cookie);
+    headers.set("X-CSRF-Token", session.csrf);
+  }
+  return fetch(url, { ...init, headers });
+}
 import { pathToFileURL } from "node:url";
 
 test("AI structured fields can be previewed, saved, edited and restored from an older backup", async () => {
@@ -93,7 +104,7 @@ test("AI structured fields can be previewed, saved, edited and restored from an 
     assert.equal(edited.usage, "用户修改的用法");
     assert.ok(!JSON.parse(edited.ai_fields).includes("usage"));
     const snapshot = await (
-      await fetch(server.url + "/api/backup")
+      await authedFetch(server.url + "/api/backup")
     ).arrayBuffer();
     const legacy = path.join(dir, "legacy.sqlite");
     writeFileSync(legacy, new Uint8Array(snapshot));
@@ -122,6 +133,20 @@ test("AI structured fields can be previewed, saved, edited and restored from an 
 });
 
 async function launch(dir: string, extra: Record<string, string> = {}) {
+  const accounts = new Accounts(dir);
+  let owner = accounts.db
+    .prepare("SELECT id FROM users WHERE username='test_owner'")
+    .get();
+  if (!owner)
+    owner = await accounts.register("test_owner", "test-password-long-enough");
+  accounts.claimLegacy("test_owner");
+  if (extra.AI_API_KEY)
+    accounts.saveAI(Number(owner.id), {
+      baseUrl: extra.AI_BASE_URL!,
+      model: extra.AI_MODEL || "fixture-model",
+      apiKey: extra.AI_API_KEY,
+    });
+  accounts.close();
   const child = spawn(
     process.execPath,
     [
@@ -134,6 +159,9 @@ async function launch(dir: string, extra: Record<string, string> = {}) {
       env: {
         ...process.env,
         PORT: "0",
+        NODE_ENV: "test",
+        AUTH_COOKIE_SECURE: "false",
+        AI_ALLOW_LOCAL_TEST: "true",
         DATA_DIR: dir,
         BACKUP_DIR: path.join(dir, "backups"),
         AI_API_KEY: "",
@@ -157,6 +185,20 @@ async function launch(dir: string, extra: Record<string, string> = {}) {
     child.kill();
     throw new Error("Server did not start: " + errors);
   }
+  const login = await fetch(url + "/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: "test_owner",
+      password: "test-password-long-enough",
+    }),
+  });
+  assert.equal(login.status, 200);
+  const identity = await login.json();
+  sessions.set(url, {
+    cookie: login.headers.get("set-cookie")!.split(";")[0],
+    csrf: identity.csrfToken,
+  });
   return {
     child,
     url,
@@ -257,7 +299,7 @@ async function request(
   body?: any,
   method?: string,
 ) {
-  const response = await fetch(url + route, {
+  const response = await authedFetch(url + route, {
     method: method || (body ? "POST" : "GET"),
     headers:
       body instanceof FormData
@@ -274,8 +316,8 @@ test("HTTP: 3000-word Excel, imports, two-tab reviews, offline core, restart, ba
   const dir = mkdtempSync(path.join(tmpdir(), "vocabflow-http-"));
   let server = await launch(dir);
   try {
-    assert.equal((await fetch(server.url)).status, 200);
-    const html = await (await fetch(server.url)).text();
+    assert.equal((await authedFetch(server.url)).status, 200);
+    const html = await (await authedFetch(server.url)).text();
     assert.ok(html.includes("VocabFlow AI"));
     const assets = [
       ...html.matchAll(
@@ -284,7 +326,7 @@ test("HTTP: 3000-word Excel, imports, two-tab reviews, offline core, restart, ba
     ].map((x) => x[1]);
     assert.ok(assets.length >= 2);
     for (const asset of assets)
-      assert.equal((await fetch(server.url + asset)).status, 200);
+      assert.equal((await authedFetch(server.url + asset)).status, 200);
     assert.equal(
       (await request(server.url, "/api/status")).data.aiConfigured,
       false,
@@ -364,7 +406,7 @@ test("HTTP: 3000-word Excel, imports, two-tab reviews, offline core, restart, ba
     assert.equal((await request(server.url, "/api/ai", {})).status, 400);
     assert.equal(
       (
-        await fetch(server.url + "/api/settings", {
+        await authedFetch(server.url + "/api/settings", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -389,10 +431,10 @@ test("HTTP: 3000-word Excel, imports, two-tab reviews, offline core, restart, ba
     const beforeWords = (await request(server.url, "/api/words")).data;
     const beforeSettings = (await request(server.url, "/api/settings")).data;
     const beforeReviews = await (
-      await fetch(server.url + "/api/export?type=reviews")
+      await authedFetch(server.url + "/api/export?type=reviews")
     ).text();
     const snapshot = await (
-      await fetch(server.url + "/api/backup")
+      await authedFetch(server.url + "/api/backup")
     ).arrayBuffer();
     assert.ok(snapshot.byteLength > 10000);
     const invalid = new FormData();
@@ -420,7 +462,7 @@ test("HTTP: 3000-word Excel, imports, two-tab reviews, offline core, restart, ba
       beforeSettings,
     );
     assert.equal(
-      await (await fetch(server.url + "/api/export?type=reviews")).text(),
+      await (await authedFetch(server.url + "/api/export?type=reviews")).text(),
       beforeReviews,
     );
     assert.equal(
