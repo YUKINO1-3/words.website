@@ -1,5 +1,7 @@
 # VocabFlow AI
 
+可选 [Cloudflare Workers + D1 部署](docs/deploy/cloudflare-d1.md)：前端和 API 同域运行，每位部署者使用自己的 Cloudflare 账号、D1 数据库和加密密钥。下文 Node/SQLite 流程仍可用于本地与服务器部署。
+
 支持账号登录的英语与雅思词汇学习网站。React + Node.js + SQLite + ts-fsrs。每个账号拥有独立学习空间和加密保存的个人 AI 配置。
 
 > 多用户升级：首次部署请先阅读 [登录系统升级与运维](docs/deploy/multi-user-login.md)。原单人数据需要管理员通过 CLI 指定归属；新注册账号不会自动获得原词库。默认安全 Cookie 需要 HTTPS；本地或临时 HTTP 测试显式设置 `AUTH_COOKIE_SECURE=false`。

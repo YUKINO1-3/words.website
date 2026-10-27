@@ -17,3 +17,11 @@ words/outputs/
 
 # Server-side account encryption key; never commit credentials.
 auth-encryption.key
+
+# Cloudflare local state and secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Personal Cloudflare deployment configuration
+wrangler.personal.jsonc
