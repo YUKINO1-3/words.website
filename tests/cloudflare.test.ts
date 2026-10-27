@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createServer } from "node:net";
@@ -442,9 +443,20 @@ test(
       );
     } finally {
       const exited = once(server, "exit");
-      server.kill();
+      if (process.platform === "win32") {
+        spawnSync("taskkill", ["/PID", String(server.pid), "/T", "/F"], {
+          stdio: "ignore",
+        });
+      } else {
+        server.kill();
+      }
       await exited;
-      rmSync(dir, { recursive: true, force: true });
+      await rm(dir, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 200,
+      });
     }
   },
 );

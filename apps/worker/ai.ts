@@ -35,7 +35,7 @@ export async function generateAI(
   const structured = input.kind === "word-fields";
   if (structured && !word) throw new HttpError("补全内容需要选择单词");
   const prompt = structured
-    ? `请为英语单词生成可保存的学习资料。只输出 JSON 对象，不要 Markdown。字段必须包含：zh（中文释义）、pos（词性及中文名称）、example（英文例句）、translation（中文翻译）、usage（中文用法、搭配和雅思语境）、en（英文释义）、phonetic（音标）。zh、pos、example、translation、usage 不得为空。单词数据：${JSON.stringify(word)}`
+    ? `生成简洁准确的英语学习资料。只输出 JSON，无 Markdown、无开场白。字段：zh（1至3个常见中文义项）、pos（词性缩写及中文）、example（1句自然英文例句）、translation（该例句的中文翻译）、usage（中文用法，1个常见搭配及1条使用提示，100字以内）、en（1句简短英文释义）、phonetic（音标）。zh、pos、example、translation、usage 必须非空。单词：${JSON.stringify({ word: word!.word })}`
     : word
       ? `用中文分节解释单词，包含中文释义、词性、英文例句及翻译、用法与搭配、IELTS 语境、同反义词、易混词和记忆技巧。单词数据：${JSON.stringify(word)}`
       : `根据真实统计提供简短学习建议，不编造数据：${JSON.stringify(await store.stats())}。困难词：${JSON.stringify((await store.words(0, "", "difficult")).slice(0, 15).map((w) => w.word))}`;
@@ -53,6 +53,7 @@ export async function generateAI(
       ...(structured ? { fields: parseEnrichment(cached.content) } : {}),
     };
   try {
+    const requestStarted = performance.now();
     const content = await chatCompletion(
         { ...config, baseUrl: base, redirect: "follow" },
         [
@@ -71,7 +72,12 @@ export async function generateAI(
       )
       .bind(store.uid, key, content, new Date().toISOString())
       .run();
-    return { content, cached: false, fields };
+    return {
+      content,
+      cached: false,
+      fields,
+      elapsedMs: Math.round(performance.now() - requestStarted),
+    };
   } catch (error) {
     throw new HttpError(
       error instanceof Error ? error.message : "AI 调用失败",

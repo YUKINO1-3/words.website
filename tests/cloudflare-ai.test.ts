@@ -149,6 +149,9 @@ test("Cloudflare AI: personal encrypted credentials, redirects, cache without qu
         .get(wordId),
       before,
     );
+    // Saving enrichment keeps the word-only structured cache stable.
+    assert.equal((await generate()).cached, true);
+    sqlite.prepare("DELETE FROM ai_generation_cache WHERE user_id=1").run();
     // Even an exhausted legacy quota must not block immediate fresh requests.
     sqlite
       .prepare(

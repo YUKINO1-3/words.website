@@ -133,7 +133,7 @@ export function createWorkspace(options: {
         id(req.params.id),
         body.word,
         body.fields,
-        getAiConfig().model || "mimo-v2.6-pro",
+        getAiConfig().model || "mimo-v2.6-flash",
       ),
     );
   });
@@ -414,7 +414,7 @@ export function createWorkspace(options: {
     const structured = req.body.kind === "word-fields";
     if (structured && !word) throw new Error("补全内容需要选择单词");
     const prompt = structured
-      ? `请为英语单词生成可保存的学习资料。只输出 JSON 对象，不要 Markdown。字段全部必须包含：zh（准确中文释义，多个常见义项）、pos（词性及中文名称）、example（自然英文例句）、translation（例句中文翻译）、usage（用中文解释如何使用，包含常见搭配、句型和雅思语境）、en（英文释义）、phonetic（音标）。zh、pos、example、translation、usage 不得为空。单词数据：${JSON.stringify(word)}`
+      ? `生成简洁准确的英语学习资料。只输出 JSON，无 Markdown、无开场白。字段：zh（1至3个常见中文义项）、pos（词性缩写及中文）、example（1句自然英文例句）、translation（该例句的中文翻译）、usage（中文用法，1个常见搭配及1条使用提示，100字以内）、en（1句简短英文释义）、phonetic（音标）。zh、pos、example、translation、usage 必须非空。单词：${JSON.stringify({ word: word.word })}`
       : word
         ? `用中文分节解释这个单词，必须包含：中文释义、词性（英文缩写及中文）、英文例句及中文翻译、如何使用（常见搭配、句型、注意事项）。再提供 IELTS Reading/Writing/Speaking 语境、同反义词、易混词、记忆技巧。单词数据：${JSON.stringify(word)}`
         : `根据这些真实统计提供简短学习建议，不编造数据：${JSON.stringify(store.stats())}。困难词：${JSON.stringify(
@@ -457,6 +457,7 @@ export function createWorkspace(options: {
       aiDay,
     );
     try {
+      const requestStarted = performance.now();
       const response = await requestAI(
         `${(aiConfig.baseUrl || "https://api.xiaomimimo.com/v1").replace(/\/$/, "")}/chat/completions`,
         {
@@ -466,7 +467,7 @@ export function createWorkspace(options: {
             Authorization: `Bearer ${aiConfig.apiKey}`,
           },
           body: JSON.stringify({
-            model: aiConfig.model || "mimo-v2.6-pro",
+            model: aiConfig.model || "mimo-v2.6-flash",
             messages: [
               {
                 role: "system",
@@ -475,7 +476,8 @@ export function createWorkspace(options: {
               },
               { role: "user", content: prompt },
             ],
-            max_tokens: 1800,
+            max_completion_tokens: structured ? 1024 : 1800,
+            ...(structured ? { thinking: { type: "disabled" } } : {}),
           }),
           signal: AbortSignal.timeout(45000),
         },
@@ -493,7 +495,12 @@ export function createWorkspace(options: {
         content,
         new Date().toISOString(),
       );
-      res.json({ content, cached: false, fields });
+      res.json({
+        content,
+        cached: false,
+        fields,
+        elapsedMs: Math.round(performance.now() - requestStarted),
+      });
     } catch {
       throw new Error("AI 调用失败或超时，请检查网络和配置；本地学习不受影响");
     } finally {
