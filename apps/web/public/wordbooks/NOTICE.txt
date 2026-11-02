@@ -1,0 +1,24 @@
+VocabFlow 应用内置词库：来源与许可
+
+这些是应用维护的内置学习资料，不代表 IELTS 考试机构的官方词汇大纲，也没有考试机构背书。词义来自开源词典，可能有多义、过时或专业义项；可在加入个人词库后编辑。
+
+1. 雅思常用词（5040 词）
+来源：skywind3000/ECDICT，IELTS 标签词条，按词频优先排序。
+固定版本：bc015ed2e24a7abef49fc6dbbb7fe32c1dadaf8b
+来源：https://github.com/skywind3000/ECDICT
+许可：MIT，Copyright (c) 2025 Linwei。
+完整许可：/wordbooks/licenses/ECDICT-MIT.txt
+修改：提取英文单词与中文释义、规范释义换行、按词频排序。
+
+2. NAWL 学术核心词（NAWL 1.2，957 词）
+3. NGSL 基础高频词（NGSL 1.2，2809 词）
+原词表作者：Browne, C., Culligan, B., and Phillips, J.
+官方来源：https://www.newgeneralservicelist.com/
+NAWL：https://www.newgeneralservicelist.com/new-academic-word-list
+NGSL：https://www.newgeneralservicelist.com/new-general-service-list
+原词表与本项目的双语衍生词表均遵循 Creative Commons Attribution-ShareAlike 4.0 International（CC BY-SA 4.0）。
+许可说明：https://creativecommons.org/licenses/by-sa/4.0/
+完整许可：/wordbooks/licenses/CC-BY-SA-4.0.txt
+本项目修改：保持原词表成员和顺序，使用上述 MIT 许可 ECDICT 为单词补充中文释义，规范释义换行，并转换为应用 JSON 格式。中文释义部分同时保留 ECDICT 的 MIT 版权与许可声明。
+
+再分发这些词表时请保留相应署名、来源、修改说明和许可；NAWL/NGSL 衍生数据继续使用 CC BY-SA 4.0。数据许可不改变应用源码的许可。

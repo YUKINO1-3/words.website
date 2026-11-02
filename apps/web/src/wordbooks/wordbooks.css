@@ -1,0 +1,116 @@
+.official-wordbooks {
+  margin: 0 0 34px;
+}
+.wordbooks-note {
+  font-size: 12px;
+  margin: -4px 0 18px;
+  line-height: 1.8;
+}
+.wordbooks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.wordbook-card {
+  padding: 24px;
+  min-width: 0;
+}
+.wordbook-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--green);
+  font-size: 12px;
+}
+.wordbook-card h3 {
+  margin: 16px 0 10px;
+  font-size: 19px;
+}
+.wordbook-card > p {
+  min-height: 56px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.wordbook-samples {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.wordbook-samples span {
+  font-size: 11px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--soft);
+  overflow-wrap: anywhere;
+}
+.wordbook-source {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  margin-bottom: 18px;
+}
+.wordbook-source a {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--muted);
+}
+.wordbook-card .button-row {
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.wordbook-card .primary {
+  font-size: 12px;
+  padding: 11px 13px;
+}
+.wordbook-preview {
+  border-top: 1px solid var(--line);
+  margin: 18px 0 0;
+  padding-top: 8px;
+}
+.wordbook-preview > div {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.wordbook-preview dt {
+  font-weight: 600;
+  font-size: 13px;
+}
+.wordbook-preview dd {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.wordbooks-license {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 13px 0 0;
+}
+@media (max-width: 1150px) {
+  .wordbooks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .wordbooks-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wordbook-card {
+    padding: 21px;
+  }
+  .wordbook-card > p {
+    min-height: 0;
+  }
+  .official-wordbooks .section-head {
+    align-items: start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
